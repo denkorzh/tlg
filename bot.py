@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import config
+import credentials
 import telebot
 import constants
 import utils
 
 
-bot = telebot.TeleBot(config.token)
+bot = telebot.TeleBot(credentials.token)
 
 
 @bot.message_handler(commands=['start'])

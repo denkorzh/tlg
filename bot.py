@@ -17,9 +17,9 @@ def start_message(message):
 
 @bot.message_handler(commands=['help'])
 def start_message(message):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    rep_button = types.KeyboardButton('/repeater')
-    nuff_button = types.KeyboardButton('/nuff')
+    keyboard = types.InlineKeyboardMarkup()
+    rep_button = types.InlineKeyboardButton('\xF0\x9F\x98\x8C repeater', callback_data='set_repeater_mode')
+    nuff_button = types.InlineKeyboardButton('\xF0\x9F\x98\x81 nuff', callback_data='set_nuff_mode')
     keyboard.add(rep_button, nuff_button)
     bot.send_message(message.chat.id, constants.help_md, parse_mode='Markdown', reply_markup=keyboard)
 
@@ -51,6 +51,17 @@ def repeat_all_messages(message):
         bot.send_message(message.chat.id, message.text)
     elif mode == 'nuff':
         bot.send_message(message.chat.id, constants.nuff_said, parse_mode='Markdown')
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_inline(call):
+    if call.message:
+        if call.data == 'set_repeater_mode':
+            utils.set_user_mode(call.message.chat.id, 'repeater')
+            bot.answer_callback_query(call.id, 'repeater mode on')
+        elif call.data == 'set_nuff_mode':
+            utils.set_user_mode(call.message.chat.id, 'nuff')
+            bot.answer_callback_query(call.id, 'repeater mode on', show_alert=True)
 
 
 if __name__ == '__main__':

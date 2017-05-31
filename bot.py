@@ -26,8 +26,9 @@ def start_message(message):
 
 @bot.message_handler(commands=['repeater', 'nuff'])
 def set_mode(message):
+    hide_keyboard = types.ReplyKeyboardRemove()
     utils.set_user_mode(message.chat.id, message.text[1:])
-    bot.send_message(message.chat.id, "Bot mode was set to {}.".format(message.text[1:]))
+    bot.send_message(message.chat.id, "Bot mode was set to {}.".format(message.text[1:]), reply_markup=hide_keyboard)
 
 
 @bot.message_handler(commands=['advert'])

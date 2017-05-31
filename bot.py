@@ -30,8 +30,9 @@ def set_mode(message):
 def show_ad(message):
     keyboard = types.InlineKeyboardMarkup()
     bank_button = types.InlineKeyboardButton(text="Банк", url="www.tinkoff.ru")
-    ins_button = types.InlineKeyboardButton(text="Страхование", url="www.tinkoffinsuranse.ru")
-    keyboard.add(bank_button, ins_button)
+    ins_button = types.InlineKeyboardButton(text="Страхование", url="www.tinkoffinsurance.ru")
+    loans_button = types.InlineKeyboardButton(text="Потребкредиты", url="www.tinkoff.loans")
+    keyboard.add(bank_button, ins_button, loans_button)
     bot.send_message(message.chat.id, 'Немного рекламы', reply_markup=keyboard)
 
 

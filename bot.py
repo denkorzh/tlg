@@ -18,8 +18,8 @@ def start_message(message):
 @bot.message_handler(commands=['help'])
 def start_message(message):
     keyboard = types.InlineKeyboardMarkup()
-    rep_button = types.InlineKeyboardButton('\xF0\x9F\x98\x8C repeater', callback_data='set_repeater_mode')
-    nuff_button = types.InlineKeyboardButton('\xF0\x9F\x98\x81 nuff', callback_data='set_nuff_mode')
+    rep_button = types.InlineKeyboardButton('😜 repeater', callback_data='set_repeater_mode')
+    nuff_button = types.InlineKeyboardButton('🤐 nuff', callback_data='set_nuff_mode')
     keyboard.add(rep_button, nuff_button)
     bot.send_message(message.chat.id, constants.help_md, parse_mode='Markdown', reply_markup=keyboard)
 

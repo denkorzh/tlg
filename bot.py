@@ -4,6 +4,7 @@ import credentials
 import telebot
 import constants
 import utils
+from telebot import types
 
 
 bot = telebot.TeleBot(credentials.token)
@@ -23,6 +24,15 @@ def start_message(message):
 def set_mode(message):
     utils.set_user_mode(message.chat.id, message.text[1:])
     bot.send_message(message.chat.id, "Bot mode was set to {}.".format(message.text[1:]))
+
+
+@bot.message_handler(commands=['advert'])
+def show_ad(message):
+    keyboard = types.InlineKeyboardMarkup()
+    bank_button = types.InlineKeyboardButton(text="Банк", url="www.tinkoff.ru")
+    ins_button = types.InlineKeyboardButton(text="Страхование", url="www.tinkoffinsuranse.ru")
+    keyboard.add(bank_button, ins_button)
+    bot.send_message(message.chat.id, 'Немного рекламы', reply_markup=keyboard)
 
 
 @bot.message_handler(content_types=["text"])

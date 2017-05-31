@@ -31,8 +31,11 @@ def show_ad(message):
     keyboard = types.InlineKeyboardMarkup()
     bank_button = types.InlineKeyboardButton(text="Банк", url="www.tinkoff.ru")
     ins_button = types.InlineKeyboardButton(text="Страхование", url="www.tinkoffinsurance.ru")
-    loans_button = types.InlineKeyboardButton(text="Потребкредиты", url="www.tinkoff.loans")
-    keyboard.add(bank_button, ins_button, loans_button)
+    loans_button = types.InlineKeyboardButton(text="Потребкредиты", url="tinkoff.loans")
+    # keyboard.add(bank_button, ins_button, loans_button)
+    keyboard.row(bank_button)
+    keyboard.row(ins_button)
+    keyboard.row(loans_button)
     bot.send_message(message.chat.id, 'Немного рекламы', reply_markup=keyboard)
 
 

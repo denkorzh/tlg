@@ -17,7 +17,11 @@ def start_message(message):
 
 @bot.message_handler(commands=['help'])
 def start_message(message):
-    bot.send_message(message.chat.id, constants.help_md, parse_mode='Markdown')
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    rep_button = types.KeyboardButton('/repeater')
+    nuff_button = types.KeyboardButton('/nuff')
+    keyboard.add(rep_button, nuff_button)
+    bot.send_message(message.chat.id, constants.help_md, parse_mode='Markdown', reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['repeater', 'nuff'])

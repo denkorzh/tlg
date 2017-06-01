@@ -3,9 +3,9 @@ import config
 import credentials
 import telebot
 import constants
+import re
 import utils
 from telebot import types
-
 
 bot = telebot.TeleBot(credentials.token)
 
@@ -79,6 +79,55 @@ def empty_query(query):
     except Exception as e:
         print(e)
 
+
+@bot.inline_handler(func=lambda query: len(query.query) > 0)
+def advice_inline(query):
+    repeater_image = 'https://github.com/denkorzh/tlg/blob/issue-10/image/echo.png'
+    nuff_image = 'https://github.com/denkorzh/tlg/blob/issue-10/image/silence.jpg'
+
+    repeater_article = types.InlineQueryResultArticle(id='repeater',
+                                                      title='Repeater mode',
+                                                      input_message_content=types.InputTextMessageContent(
+                                                          message_text='/repeater'
+                                                      ),
+                                                      description='I will repeat everything',
+                                                      thumb_url=repeater_image,
+                                                      thumb_width=48,
+                                                      thumb_height=48
+                                                      )
+    nuff_article = types.InlineQueryResultArticle(id='nuff',
+                                                  title='Nuff said mode',
+                                                  input_message_content=types.InputTextMessageContent(
+                                                      message_text='/nuff'
+                                                  ),
+                                                  description='I will say nothing',
+                                                  thumb_url=nuff_image,
+                                                  thumb_width=48,
+                                                  thumb_height=48
+                                                  )
+    error_article = types.InlineQueryResultArticle(id='error',
+                                                   title='I have no such mode',
+                                                   input_message_content=types.InputVenueMessageContent(
+                                                       latitude=90,
+                                                       longitude=0,
+                                                       title='Умник, иди-ка отсюда',
+                                                       address='Random place'
+                                                   ),
+                                                   description='Sorry, I have only two modes',
+                                                   )
+
+    inputed = query.query
+    length = len(inputed) + 1
+
+    try:
+        if inputed == 'repeater'[:length]:
+            bot.answer_inline_query(query.id, [repeater_article], 60)
+        elif inputed == 'nuff'[:length]:
+            bot.answer_inline_query(query.id, [nuff_article], 60)
+        else:
+            bot.answer_inline_query(query.id, [error_article], 60)
+    except Exception as e:
+        print(e)
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)

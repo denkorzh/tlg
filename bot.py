@@ -81,8 +81,8 @@ def empty_query(query):
 
 @bot.inline_handler(func=lambda query: len(query.query) > 0)
 def advice_inline(query):
-    repeater_image = 'https://raw.githubusercontent.com/denkorzh/tlg/issue-10/image/echo.png'
-    nuff_image = 'https://raw.githubusercontent.com/denkorzh/tlg/issue-10/image/silence.jpg'
+    repeater_image = 'https://raw.githubusercontent.com/denkorzh/tlg/dev/image/echo.png'
+    nuff_image = 'https://raw.githubusercontent.com/denkorzh/tlg/dev/image/silence.jpg'
 
     repeater_article = types.InlineQueryResultArticle(id='repeater',
                                                       title='Repeater mode',

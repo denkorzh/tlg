@@ -64,5 +64,21 @@ def callback_inline(call):
             bot.answer_callback_query(call.id, 'nuff mode on', show_alert=True)
 
 
+@bot.inline_handler(func=lambda query: not len(query.query))
+def empty_query(query):
+    hint = 'Введи название режима работы'
+    try:
+        article = types.InlineQueryResultArticle(id='1',
+                                                 title='Бот-безделушка',
+                                                 input_message_content=types.InputTextMessageContent(
+                                                     message_text='Да введи ж ты наконец!'
+                                                 ),
+                                                 description=hint
+                                                 )
+        bot.answer_inline_query(query.id, [article])
+    except Exception as e:
+        print(e)
+
+
 if __name__ == '__main__':
     bot.polling(none_stop=True)

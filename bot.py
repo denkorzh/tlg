@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-import config
+
 import credentials
 import telebot
 import constants
-import re
 import utils
 from telebot import types
 
@@ -82,8 +81,8 @@ def empty_query(query):
 
 @bot.inline_handler(func=lambda query: len(query.query) > 0)
 def advice_inline(query):
-    repeater_image = 'https://github.com/denkorzh/tlg/blob/issue-10/image/echo.png'
-    nuff_image = 'https://github.com/denkorzh/tlg/blob/issue-10/image/silence.jpg'
+    repeater_image = 'https://raw.githubusercontent.com/denkorzh/tlg/issue-10/image/echo.png'
+    nuff_image = 'https://raw.githubusercontent.com/denkorzh/tlg/issue-10/image/silence.jpg'
 
     repeater_article = types.InlineQueryResultArticle(id='repeater',
                                                       title='Repeater mode',
@@ -102,14 +101,14 @@ def advice_inline(query):
                                                   ),
                                                   description='I will say nothing',
                                                   thumb_url=nuff_image,
-                                                  thumb_width=48,
+                                                  thumb_width=61,
                                                   thumb_height=48
                                                   )
     error_article = types.InlineQueryResultArticle(id='error',
                                                    title='I have no such mode',
                                                    input_message_content=types.InputVenueMessageContent(
-                                                       latitude=90,
-                                                       longitude=0,
+                                                       latitude=53.25,
+                                                       longitude=34.37,
                                                        title='Умник, иди-ка отсюда',
                                                        address='Random place'
                                                    ),
@@ -117,7 +116,7 @@ def advice_inline(query):
                                                    )
 
     inputed = query.query
-    length = len(inputed) + 1
+    length = len(inputed)
 
     try:
         if inputed == 'repeater'[:length]:

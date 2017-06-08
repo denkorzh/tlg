@@ -11,6 +11,7 @@ bot = telebot.TeleBot(credentials.token)
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
+    utils.set_settings(message.chat.id, constants.default_settings)
     bot.send_message(message.chat.id, constants.greeting_md, parse_mode='Markdown')
 
 

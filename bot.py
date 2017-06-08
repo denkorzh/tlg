@@ -4,6 +4,7 @@ import credentials
 import telebot
 import constants
 import utils
+import elements
 from telebot import types
 
 bot = telebot.TeleBot(credentials.token)
@@ -12,23 +13,91 @@ bot = telebot.TeleBot(credentials.token)
 @bot.message_handler(commands=['start'])
 def start_message(message):
     utils.set_settings(message.chat.id, constants.default_settings)
-    bot.send_message(message.chat.id, constants.greeting_md, parse_mode='Markdown')
+    bot.send_message(message.chat.id, constants.greeting_md, reply_markup=elements.inline_keyboard_languages())
+
+
+@bot.callback_query_handler(func=lambda call: call.data[:18] == 'settings_language_')
+def set_language(call):
+    new_language = call.data.split('_')[-1]
+    if new_language in constants.languages:
+        utils.change_settings(call.message.chat.id, 'language', new_language)
+    bot.answer_callback_query(call.id)
 
 
 @bot.message_handler(commands=['help'])
-def start_message(message):
-    keyboard = types.InlineKeyboardMarkup()
-    rep_button = types.InlineKeyboardButton('😜 repeater', callback_data='set_repeater_mode')
-    nuff_button = types.InlineKeyboardButton('🤐 nuff', callback_data='set_nuff_mode')
-    keyboard.add(rep_button, nuff_button)
-    bot.send_message(message.chat.id, constants.help_md, parse_mode='Markdown', reply_markup=keyboard)
+def help_message(message):
+    user_lang = utils.get_language(message.chat.id)
+    bot.send_message(message.chat.id, constants.help_md[user_lang])
 
 
-@bot.message_handler(commands=['repeater', 'nuff'])
-def set_mode(message):
-    hide_keyboard = types.ReplyKeyboardRemove()
-    utils.set_user_mode(message.chat.id, message.text[1:])
-    bot.send_message(message.chat.id, "Bot mode was set to {}.".format(message.text[1:]), reply_markup=hide_keyboard)
+@bot.message_handler(commands=['settings'])
+def settings_menu(message):
+    user_lang = utils.get_language(message.chat.id)
+    current_settings = utils.get_settings(message.chat.id)
+
+    bot.send_message(message.chat.id,
+                     text=constants.settings_md[user_lang].format(
+                         current_settings['language'],
+                         current_settings['alpha'],
+                         current_settings['epsilon']
+                     ),
+                     reply_markup=elements.inline_keyboard_settings(),
+                     parse_mode='Markdown'
+                     )
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'change_language')
+def change_language(call):
+    user_lang = utils.get_language(call.message.chat.id)
+    bot.send_message(call.message.chat.id,
+                     text=constants.input_language[user_lang],
+                     reply_markup=elements.inline_keyboard_languages()
+                     )
+    bot.answer_callback_query(call.id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'change_alpha')
+def change_alpha(call):
+    user_lang = utils.get_language(call.message.chat.id)
+    msg = bot.send_message(call.message.chat.id,
+                           text=constants.input_alpha[user_lang],
+                           )
+    bot.register_next_step_handler(msg, process_new_alpha)
+    bot.answer_callback_query(call.id)
+
+
+def process_new_alpha(message):
+    global bot
+    user_lang = utils.get_language(message.chat.id)
+    try:
+        new_alpha = float(message.text)
+        assert 0 < new_alpha < 1
+        utils.change_settings(message.chat.id, 'alpha', new_alpha)
+    except:
+        msg = bot.send_message(message.chat.id, text=constants.error_again[user_lang])
+        bot.register_next_step_handler(msg, process_new_alpha)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'change_epsilon')
+def change_epsilon(call):
+    user_lang = utils.get_language(call.message.chat.id)
+    msg = bot.send_message(call.message.chat.id,
+                           text=constants.input_epsilon[user_lang],
+                           )
+    bot.register_next_step_handler(msg, process_new_epsilon)
+    bot.answer_callback_query(call.id)
+
+
+def process_new_epsilon(message):
+    global bot
+    user_lang = utils.get_language(message.chat.id)
+    try:
+        new_epsilon = float(message.text)
+        assert 0 < new_epsilon < 1
+        utils.change_settings(message.chat.id, 'epsilon', new_epsilon)
+    except:
+        msg = bot.send_message(message.chat.id, text=constants.error_again[user_lang])
+        bot.register_next_step_handler(msg, process_new_epsilon)
 
 
 @bot.message_handler(commands=['advert'])
@@ -53,15 +122,15 @@ def repeat_all_messages(message):
         bot.send_message(message.chat.id, constants.nuff_said, parse_mode='Markdown')
 
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback_inline(call):
-    if call.message:
-        if call.data == 'set_repeater_mode':
-            utils.set_user_mode(call.message.chat.id, 'repeater')
-            bot.answer_callback_query(call.id, 'repeater mode on')
-        elif call.data == 'set_nuff_mode':
-            utils.set_user_mode(call.message.chat.id, 'nuff')
-            bot.answer_callback_query(call.id, 'nuff mode on', show_alert=True)
+# @bot.callback_query_handler(func=lambda call: True)
+# def callback_inline(call):
+#     if call.message:
+#         if call.data == 'set_repeater_mode':
+#             utils.set_user_mode(call.message.chat.id, 'repeater')
+#             bot.answer_callback_query(call.id, 'repeater mode on')
+#         elif call.data == 'set_nuff_mode':
+#             utils.set_user_mode(call.message.chat.id, 'nuff')
+#             bot.answer_callback_query(call.id, 'nuff mode on', show_alert=True)
 
 
 @bot.inline_handler(func=lambda query: not len(query.query))

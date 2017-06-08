@@ -12,6 +12,7 @@ def set_shelve_value(shelf, key, value):
     :param value: значение
     """
     with shelve.open(shelf) as storage:
+        # print('setting...')
         storage[str(key)] = value
 
 
@@ -103,3 +104,12 @@ def change_settings(chat_id, key, value):
         settings = constants.default_settings
     settings[key] = value
     set_settings(chat_id, settings)
+
+
+def get_language(chat_id):
+    """
+    Получает язык пользователя
+    :param chat_id: id юзера
+    :return: язык пользователя
+    """
+    return get_settings(chat_id)['language']

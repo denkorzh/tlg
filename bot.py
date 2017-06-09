@@ -4,18 +4,32 @@ import credentials
 import telebot
 import constants
 import utils
+from utils import VariationsDB
 import elements
 from telebot import types
 
 bot = telebot.TeleBot(credentials.token)
 
 
+# handle /cancel
+@bot.message_handler(commands=['cancel'])
+def cancel_test(message):
+    chat_id = message.chat.id
+    test_id = utils.get_test_id(chat_id)
+    utils.delete_test_id(chat_id)
+    vdb = VariationsDB()
+    vdb.delete_test_data(test_id)
+    vdb.close()
+
+
+# start conversation
 @bot.message_handler(commands=['start'])
 def start_message(message):
     utils.set_settings(message.chat.id, constants.default_settings)
     bot.send_message(message.chat.id, constants.greeting_md, reply_markup=elements.inline_keyboard_languages())
 
 
+# choose user language in conversation start
 @bot.callback_query_handler(func=lambda call: call.data[:18] == 'settings_language_')
 def set_language(call):
     new_language = call.data.split('_')[-1]
@@ -24,12 +38,15 @@ def set_language(call):
     bot.answer_callback_query(call.id)
 
 
+# handle /help
 @bot.message_handler(commands=['help'])
 def help_message(message):
     user_lang = utils.get_language(message.chat.id)
     bot.send_message(message.chat.id, constants.help_md[user_lang])
 
 
+# user settings
+# handle /settings
 @bot.message_handler(commands=['settings'])
 def settings_menu(message):
     user_lang = utils.get_language(message.chat.id)
@@ -46,6 +63,7 @@ def settings_menu(message):
                      )
 
 
+# change language
 @bot.callback_query_handler(func=lambda call: call.data == 'change_language')
 def change_language(call):
     user_lang = utils.get_language(call.message.chat.id)
@@ -56,6 +74,7 @@ def change_language(call):
     bot.answer_callback_query(call.id)
 
 
+# change alpha
 @bot.callback_query_handler(func=lambda call: call.data == 'change_alpha')
 def change_alpha(call):
     user_lang = utils.get_language(call.message.chat.id)
@@ -78,6 +97,7 @@ def process_new_alpha(message):
         bot.register_next_step_handler(msg, process_new_alpha)
 
 
+# change epsilon
 @bot.callback_query_handler(func=lambda call: call.data == 'change_epsilon')
 def change_epsilon(call):
     user_lang = utils.get_language(call.message.chat.id)
@@ -100,6 +120,7 @@ def process_new_epsilon(message):
         bot.register_next_step_handler(msg, process_new_epsilon)
 
 
+# handle /advert
 @bot.message_handler(commands=['advert'])
 def show_ad(message):
     keyboard = types.InlineKeyboardMarkup()
@@ -113,13 +134,78 @@ def show_ad(message):
     bot.send_message(message.chat.id, 'Немного рекламы', reply_markup=keyboard)
 
 
-@bot.message_handler(content_types=["text"])
-def repeat_all_messages(message):
-    mode = utils.get_user_mode(message.chat.id)
-    if mode == 'repeater':
-        bot.send_message(message.chat.id, message.text)
-    elif mode == 'nuff':
-        bot.send_message(message.chat.id, constants.nuff_said, parse_mode='Markdown')
+@bot.message_handler(commands=['newtest'])
+def set_new_test(message):
+    utils.set_test_id(message.chat.id, message.message_id)
+    user_lang = utils.get_language(message.chat.id)
+    msg = bot.send_message(message.chat.id, text=constants.input_control[user_lang])
+    bot.register_next_step_handler(msg, process_control_input)
+
+
+def process_control_input(message):
+    vdb = VariationsDB()
+    chat_id = message.chat.id
+    test_id = utils.get_test_id(chat_id)
+    user_lang = utils.get_language(chat_id)
+    processed = utils.process_new_variation(vdb, test_id, message.text)
+    if not processed:
+        msg = bot.send_message(chat_id, text=constants.input_treatment[user_lang].format(1))
+        bot.register_next_step_handler(msg, process_treatment_input)
+    else:
+        msg = bot.send_message(chat_id, text=constants.error_again[user_lang])
+        bot.register_next_step_handler(msg, process_control_input)
+    vdb.close()
+
+
+def process_treatment_input(message):
+    vdb = VariationsDB()
+    chat_id = message.chat.id
+    test_id = utils.get_test_id(chat_id)
+    user_lang = utils.get_language(chat_id)
+    var_num = vdb.get_current_number(test_id)
+    if var_num > 1:
+        bot.delete_message(chat_id, message.message_id - 2)
+    if not utils.process_new_variation(vdb, test_id, message.text):
+        # TODO: перепилить кнопки на reply - чтобы ничего кроме команд нельзя было ввести
+        bot.send_message(message.chat.id, text='Продолжить?', reply_markup=elements.inline_keyboard_treatments())
+    else:
+        msg = bot.send_message(message.chat.id, text=constants.error_again[user_lang])
+        bot.register_next_step_handler(msg, process_treatment_input)
+    vdb.close()
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'add_treatment')
+def process_additional_treatment(call):
+    vdb = VariationsDB()
+    test_id = utils.get_test_id(call.message.chat.id)
+    user_lang = utils.get_language(call.message.chat.id)
+    var_num = vdb.get_current_number(test_id)
+    msg = bot.send_message(call.message.chat.id, text=constants.input_treatment[user_lang].format(var_num))
+    bot.register_next_step_handler(msg, process_treatment_input)
+    bot.answer_callback_query(call.id)
+    vdb.close()
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'start_test')
+def starting_calculus(call):
+    vdb = VariationsDB()
+    test_id = utils.get_test_id(call.message.chat.id)
+    json_data = vdb.get_json(test_id)
+    bot.answer_callback_query(call.id)
+    bot.send_chat_action(call.message.chat.id, 'typing')
+    bot.send_message(call.message.chat.id, text=json_data)  # TODO: сюда вписать начало вычисления теста
+    utils.delete_test_id(call.message.chat.id)
+    vdb.delete_test_data(test_id)
+    vdb.close()
+
+
+# @bot.message_handler(content_types=["text"])
+# def repeat_all_messages(message):
+#     mode = utils.get_user_mode(message.chat.id)
+#     if mode == 'repeater':
+#         bot.send_message(message.chat.id, message.text)
+#     elif mode == 'nuff':
+#         bot.send_message(message.chat.id, constants.nuff_said, parse_mode='Markdown')
 
 
 # @bot.callback_query_handler(func=lambda call: True)

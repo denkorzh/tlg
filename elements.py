@@ -30,3 +30,11 @@ def inline_keyboard_settings():
     epsilon_button = types.InlineKeyboardButton(text='ε epsilon', callback_data='change_epsilon')
     keyboard.add(language_button, alpha_button, epsilon_button)
     return keyboard
+
+
+def inline_keyboard_treatments():
+    keyboard = types.InlineKeyboardMarkup()
+    one_more_button = types.InlineKeyboardButton(text='+1', callback_data='add_treatment')
+    test_button = types.InlineKeyboardButton(text='Start Test', callback_data='start_test')
+    keyboard.add(one_more_button, test_button)
+    return keyboard

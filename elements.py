@@ -48,3 +48,12 @@ def reply_keyboard_languages():
     rus_button = types.KeyboardButton(constants.language_button_rus_text)
     keyboard.add(rus_button)
     return keyboard
+
+
+def reply_keyboard_treatments(lang):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=1)
+    one_more_button = types.KeyboardButton(constants.one_more_treatment_button_text[lang])
+    stop_input_button = types.KeyboardButton(constants.stop_input_treatment_button_text[lang])
+    keyboard.row(one_more_button)
+    keyboard.row(stop_input_button)
+    return keyboard

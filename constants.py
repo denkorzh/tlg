@@ -37,7 +37,8 @@ input_epsilon = {
 }
 
 error_again = {
-    'rus': """Ошибка. Попробуйте еще раз"""
+    'rus': """Ошибка. Попробуйте еще раз""",
+    'eng': """An error occurred. Try again"""
 }
 
 input_control = {'rus': 'Введите через пробел количество всех и успешных попыток в контрольной вариации'}
@@ -52,3 +53,15 @@ default_settings = {'language': 'eng',
 language_button_rus_text = "🇷🇺 Русский"
 
 languages = {language_button_rus_text: 'rus'}
+
+one_more_treatment_button_text = {
+    'rus': """🆕 Добавить вариацию"""
+}
+
+stop_input_treatment_button_text = {
+    'rus': """🆗 Проверить ввод"""
+}
+
+if_continue_input = {
+    'rus': """Продолжить?"""
+}

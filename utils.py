@@ -193,7 +193,7 @@ class VariationsDB(SQLighter):
         super(VariationsDB, self).__init__(config.variations_db)
 
     def __enter__(self):
-        pass
+        return self
 
     def __exit__(self, *args):
         self.close()

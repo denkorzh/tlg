@@ -32,9 +32,16 @@ def start_message(message):
 
 # choose user language in conversation start
 def set_language(message):
-    new_language = constants.languages[message.text]
-    utils.change_settings(message.chat.id, 'language', new_language)
-    bot.send_message(message.chat.id, text=constants.help_md[new_language], reply_markup=types.ReplyKeyboardRemove())
+    if message.text in constants.languages:
+        new_language = constants.languages[message.text]
+        utils.change_settings(message.chat.id, 'language', new_language)
+        bot.send_message(message.chat.id,
+                         text=constants.help_md[new_language],
+                         reply_markup=types.ReplyKeyboardRemove()
+                         )
+    else:
+        msg = bot.send_message(message.chat.id, text=constants.error_again[constants.default_settings['language']])
+        bot.register_next_step_handler(msg, set_language)
 
 
 # handle /help
@@ -163,39 +170,51 @@ def process_treatment_input(message):
     user_lang = utils.get_language(chat_id)
     var_num = vdb.get_current_number(test_id)
     if var_num > 1:
-        bot.delete_message(chat_id, message.message_id - 2)
+        bot.delete_message(chat_id, message.message_id - 3)
     if not utils.process_new_variation(vdb, test_id, message.text):
-        # TODO: перепилить кнопки на reply - чтобы ничего кроме команд нельзя было ввести
-        bot.send_message(message.chat.id, text='Продолжить?', reply_markup=elements.inline_keyboard_treatments())
+        msg = bot.send_message(message.chat.id,
+                               text=constants.if_continue_input[user_lang],
+                               reply_markup=elements.reply_keyboard_treatments(user_lang)
+                               )
+        bot.register_next_step_handler(msg, process_continuation_response)
     else:
         msg = bot.send_message(message.chat.id, text=constants.error_again[user_lang])
         bot.register_next_step_handler(msg, process_treatment_input)
     vdb.close()
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'add_treatment')
-def process_additional_treatment(call):
-    vdb = VariationsDB()
-    test_id = utils.get_test_id(call.message.chat.id)
-    user_lang = utils.get_language(call.message.chat.id)
-    var_num = vdb.get_current_number(test_id)
-    msg = bot.send_message(call.message.chat.id, text=constants.input_treatment[user_lang].format(var_num))
+def process_continuation_response(message):
+    chat_id = message.chat.id
+    user_lang = utils.get_language(chat_id)
+    text = message.text
+    if text == constants.one_more_treatment_button_text[user_lang]:
+        process_additional_treatment(chat_id)
+    elif text == constants.stop_input_treatment_button_text[user_lang]:
+        starting_calculus(chat_id, message.message_id)
+
+
+def process_additional_treatment(chat_id):
+    test_id = utils.get_test_id(chat_id)
+    user_lang = utils.get_language(chat_id)
+    with VariationsDB() as vdb:
+        var_num = vdb.get_current_number(test_id)
+    msg = bot.send_message(chat_id,
+                           text=constants.input_treatment[user_lang].format(var_num),
+                           reply_markup=types.ReplyKeyboardRemove()
+                           )
     bot.register_next_step_handler(msg, process_treatment_input)
-    bot.answer_callback_query(call.id)
-    vdb.close()
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'start_test')
-def starting_calculus(call):
-    vdb = VariationsDB()
-    test_id = utils.get_test_id(call.message.chat.id)
-    json_data = vdb.get_json(test_id)
-    bot.answer_callback_query(call.id)
-    bot.send_chat_action(call.message.chat.id, 'typing')
-    bot.send_message(call.message.chat.id, text=json_data)  # TODO: сюда вписать начало вычисления теста
-    utils.delete_test_id(call.message.chat.id)
-    vdb.delete_test_data(test_id)
-    vdb.close()
+def starting_calculus(chat_id, message_id):
+    bot.delete_message(chat_id, message_id - 1)
+    bot.send_chat_action(chat_id, 'typing')
+    test_id = utils.get_test_id(chat_id)
+    with VariationsDB() as vdb:
+        json_data = vdb.get_json(test_id)
+        # TODO: сюда вписать начало вычисления теста
+        bot.send_message(chat_id, text=json_data, reply_markup=types.ReplyKeyboardRemove())
+        utils.delete_test_id(chat_id)
+        vdb.delete_test_data(test_id)
 
 
 # @bot.message_handler(content_types=["text"])
@@ -282,6 +301,7 @@ def advice_inline(query):
             bot.answer_inline_query(query.id, [error_article], 60)
     except Exception as e:
         print(e)
+
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)

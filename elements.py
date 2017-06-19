@@ -57,3 +57,16 @@ def reply_keyboard_treatments(lang):
     keyboard.row(one_more_button)
     keyboard.row(stop_input_button)
     return keyboard
+
+
+def inline_keyboard_scroll(page_num, chat_id, message_id, mask=[True]*4):
+    args = (page_num, chat_id, message_id)
+    keyboard = types.InlineKeyboardMarkup(row_width=4)
+    home_button = types.InlineKeyboardButton(text='⏪', callback_data='scroll_home_{:d}_{:d}_{:d}'.format(*args))
+    prev_button = types.InlineKeyboardButton(text='⬅', callback_data='scroll_prev_{:d}_{:d}_{:d}'.format(*args))
+    next_button = types.InlineKeyboardButton(text='➡', callback_data='scroll_next_{:d}_{:d}_{:d}'.format(*args))
+    end_button = types.InlineKeyboardButton(text='⏩', callback_data='scroll_end_{:d}_{:d}_{:d}'.format(*args))
+    buttons = (home_button, prev_button, next_button, end_button)
+    buttons = [b for b, f in zip(buttons, mask) if f]
+    keyboard.add(*buttons)
+    return keyboard

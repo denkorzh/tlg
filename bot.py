@@ -7,6 +7,7 @@ import utils
 from utils import VariationsDB
 import elements
 from telebot import types
+from ABTypes import VariationsCollection
 
 bot = telebot.TeleBot(credentials.token)
 
@@ -190,7 +191,7 @@ def process_continuation_response(message):
     if text == constants.one_more_treatment_button_text[user_lang]:
         process_additional_treatment(chat_id)
     elif text == constants.stop_input_treatment_button_text[user_lang]:
-        starting_calculus(chat_id, message.message_id)
+        check_input(chat_id, message.message_id)
 
 
 def process_additional_treatment(chat_id):
@@ -205,16 +206,49 @@ def process_additional_treatment(chat_id):
     bot.register_next_step_handler(msg, process_treatment_input)
 
 
-def starting_calculus(chat_id, message_id):
+def check_input(chat_id, message_id):
     bot.delete_message(chat_id, message_id - 1)
     bot.send_chat_action(chat_id, 'typing')
     test_id = utils.get_test_id(chat_id)
     with VariationsDB() as vdb:
         json_data = vdb.get_json(test_id)
+        var_col = VariationsCollection()
+        var_col.load_json(json_data)
+        text, page_number = utils.print_table_page(var_col.describe(), 0, 5)
         # TODO: сюда вписать начало вычисления теста
-        bot.send_message(chat_id, text=json_data, reply_markup=types.ReplyKeyboardRemove())
-        utils.delete_test_id(chat_id)
-        vdb.delete_test_data(test_id)
+        bot.send_message(chat_id,
+                         text=text,
+                         reply_markup=elements.inline_keyboard_scroll(page_number, chat_id, message_id+1,
+                                                                      [False, False, True, True]
+                                                                      ),
+                         parse_mode='Markdown'
+                         )
+        bot.send_message(chat_id, 'Ну как?')
+        # utils.delete_test_id(chat_id)
+        # vdb.delete_test_data(test_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('scroll_'))
+def scroll_description(call):
+    data = call.data.split('_')
+    direction = data[1]
+    page_number, chat_id, message_id = list(map(int, data[2:]))
+    mask = [True] * 4
+
+    if direction == 'prev':
+        page_number = max(page_number - 1, 0)
+    elif direction == 'next':
+        page_number = page_number + 1
+
+    if direction == 'home' or page_number == 0:
+        page_number = 0
+        mask = [False] * 2 + [True] * 2
+    elif direction == 'end':
+        page_number = -1
+        mask = [True] * 2 + [False] * 2
+
+    # TODO: сделать шелф для json с готовой коллекцией, в предыдущей функции загрузить туда,
+    # здесь достать, построить нужную коллекцию, вывести на экран нужную страницу
 
 
 # @bot.message_handler(content_types=["text"])

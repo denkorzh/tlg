@@ -10,8 +10,9 @@ class Variation:
     """
     Class handles results provided with A/B test for a particular variation
     """
-    def __init__(self, total: Optional[int]=None, success: Optional[int]=None,
-                 data: Optional[Sequence[int]]=None, group: Optional[int]=None
+
+    def __init__(self, total: Optional[int] = None, success: Optional[int] = None,
+                 data: Optional[Sequence[int]] = None, group: Optional[int] = None
                  ) -> None:
         """
         Create Variation instance
@@ -93,6 +94,7 @@ class VariationsCollection:
     Set of variations obtained within A/B test.
     Includes one control variations and several experimental ones.
     """
+
     def __init__(self, *args: Variation) -> None:
         """
         Create VariationsCollection instance.
@@ -152,7 +154,7 @@ class VariationsCollection:
         if n > len(self.treatments):
             warnings.warn('Number of experimental variations is less then proposed number.')
         else:
-            del self.treatments[n-1]
+            del self.treatments[n - 1]
 
     def describe(self) -> Optional[PandasDataFrame]:
         """
@@ -165,17 +167,17 @@ class VariationsCollection:
             return None
         info_dict = dict()
         if self.control is not None:
-            info_dict['Control'] = [self.control.success,
-                                    self.control.total,
+            info_dict['Control'] = [int(self.control.success),
+                                    int(self.control.total),
                                     self.control.estimate_conversion()
                                     ]
         for i, treatment in enumerate(self.treatments, 1):
-            info_dict['Treatment_{:d}'.format(i)] = [treatment.success,
-                                                     treatment.total,
-                                                     treatment.estimate_conversion()
-                                                     ]
+            info_dict['Test_{:d}'.format(i)] = [int(treatment.success),
+                                                int(treatment.total),
+                                                treatment.estimate_conversion()
+                                                ]
         info_df = pd.DataFrame(info_dict)
-        info_df.index = ['Success', 'Total', 'Conversion_rate']
+        info_df.index = ['+', '#', '%']
         return info_df.T
 
     def dump_json(self) -> str:
@@ -195,8 +197,8 @@ class VariationsCollection:
 
         d = dict()
         d['0'] = variation_to_dict(self.control)
-        for i, var in enumerate(self.treatments, 1):
-            d[str(i)] = variation_to_dict(var)
+        for i, v in enumerate(self.treatments, 1):
+            d[str(i)] = variation_to_dict(v)
 
         return json.dumps(d)
 

@@ -140,6 +140,7 @@ class SQLighter:
     """
     Класс для работы с БД, содержащей вариации
     """
+
     def __init__(self, database):
         self.connection = sqlite3.connect(database)
         self.cursor = self.connection.cursor()
@@ -189,6 +190,7 @@ class VariationsDB(SQLighter):
     """
     Класс для работы с БД, содержащей вариации
     """
+
     def __init__(self):
         super(VariationsDB, self).__init__(config.variations_db)
 
@@ -266,3 +268,37 @@ def process_new_variation(db: VariationsDB, test_id: str, s: str):
     except Exception as e:
         print(e)
         return 3
+
+
+def print_table_page(df, page_num, rows_per_page):
+    """
+    Возвращает нужную страницу таблицы, если она существует, и настоящий номер этой страницы.
+    Если требуется страница с номером, меньшим нуля, то показывается нулевая страница.
+    Если требуется страница с номером, большим максимально возможного, то показывается последняя страница.
+    
+    :param pandas.DataFrame df: таблица с данными
+    :param int page_num: номер страницы, считая с 0. Для последней страницы можно воспользоваться номером -1.
+    :param int rows_per_page: количество строк на странице
+    :return: str
+    """
+
+    from tabulate import tabulate
+    from numpy import ceil
+
+    num_rows = df.shape[0]
+    num_pages = int(ceil(num_rows / rows_per_page))
+
+    right_limit = lambda page_number: min(num_rows, (page_number + 1) * rows_per_page)
+
+    if page_num == -1:
+        page_num = num_pages - 1
+    elif page_num < 0:
+        page_num = 0
+    elif page_num >= num_pages:
+        page_num = num_pages - 1
+
+    page = df.ix[page_num * rows_per_page:right_limit(page_num), :]
+    page_str = '```text\n' + tabulate(page, headers='keys', tablefmt='pipe') + '\n```'
+    # TODO: выбрать такое форматирование, чтобы таблица вмещалась по ширине в сообщение
+
+    return page_str, page_num

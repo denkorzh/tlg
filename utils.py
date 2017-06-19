@@ -192,6 +192,12 @@ class VariationsDB(SQLighter):
     def __init__(self):
         super(VariationsDB, self).__init__(config.variations_db)
 
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *args):
+        self.close()
+
     def get_current_number(self, test_id):
         """
         Возвращает текущее количество вариаций в тесте

@@ -5,11 +5,14 @@
 """
 
 from telebot import types
+import constants
 
 
 def inline_keyboard_languages():
     keyboard = types.InlineKeyboardMarkup()
-    rus_button = types.InlineKeyboardButton(text='🇷🇺 Русский', callback_data='settings_language_rus')
+    rus_button = types.InlineKeyboardButton(text=constants.language_button_rus_text,
+                                            callback_data='settings_language_rus'
+                                            )
     keyboard.add(rus_button)
     return keyboard
 
@@ -37,4 +40,11 @@ def inline_keyboard_treatments():
     one_more_button = types.InlineKeyboardButton(text='+1', callback_data='add_treatment')
     test_button = types.InlineKeyboardButton(text='Start Test', callback_data='start_test')
     keyboard.add(one_more_button, test_button)
+    return keyboard
+
+
+def reply_keyboard_languages():
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    rus_button = types.KeyboardButton(constants.language_button_rus_text)
+    keyboard.add(rus_button)
     return keyboard

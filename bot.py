@@ -26,16 +26,15 @@ def cancel_test(message):
 @bot.message_handler(commands=['start'])
 def start_message(message):
     utils.set_settings(message.chat.id, constants.default_settings)
-    bot.send_message(message.chat.id, constants.greeting_md, reply_markup=elements.inline_keyboard_languages())
+    msg = bot.send_message(message.chat.id, constants.greeting_md, reply_markup=elements.reply_keyboard_languages())
+    bot.register_next_step_handler(msg, set_language)
 
 
 # choose user language in conversation start
-@bot.callback_query_handler(func=lambda call: call.data[:18] == 'settings_language_')
-def set_language(call):
-    new_language = call.data.split('_')[-1]
-    if new_language in constants.languages:
-        utils.change_settings(call.message.chat.id, 'language', new_language)
-    bot.answer_callback_query(call.id)
+def set_language(message):
+    new_language = constants.languages[message.text]
+    utils.change_settings(message.chat.id, 'language', new_language)
+    bot.send_message(message.chat.id, text=constants.help_md[new_language], reply_markup=types.ReplyKeyboardRemove())
 
 
 # handle /help
